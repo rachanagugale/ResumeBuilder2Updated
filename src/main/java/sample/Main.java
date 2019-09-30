@@ -36,6 +36,7 @@ public class Main extends Application {
     ScrollPane sc4 = new ScrollPane();
     GridPane gp4 = new GridPane();
     Person person = new Person();
+    Label notif = new Label("");
 
     Stage stage;
 
@@ -55,7 +56,7 @@ public class Main extends Application {
         resumeL.setStyle("-fx-font-size: 24");
         Button button1 = new Button("Build new Resume!");
         Button button2 = new Button("Build from old data!");
-        vBox.getChildren().addAll(resumeL, button1);
+        vBox.getChildren().addAll(resumeL, button1, button2);
         vBox.setAlignment(Pos.CENTER);
         button1.setOnAction(new EventHandler<ActionEvent>()
         {
@@ -71,7 +72,7 @@ public class Main extends Application {
             @Override
             public void handle(ActionEvent event)
             {
-                person.retrieveData(primaryStage);
+                person.searchForResume(primaryStage);
             }
         });
 
@@ -85,6 +86,7 @@ public class Main extends Application {
 
     void getPersonalInfo()
     {
+        notif.setText("");
         int rowCounter = 0;
         Button nextBtn = new Button("Next");
 
@@ -94,8 +96,11 @@ public class Main extends Application {
         gp1.addRow(rowCounter++, person.phoneL, person.phoneTF);
         gp1.addRow(rowCounter++, person.emailL, person.emailTF);
         gp1.addRow(rowCounter++, nextBtn);
+        //gp1.addRow(rowCounter++, notif);
+        VBox vBox = new VBox();
 
         sc1.setContent(gp1);
+        vBox.getChildren().addAll(sc1, notif);
 
         nextBtn.setOnAction(event ->
         {
@@ -103,9 +108,13 @@ public class Main extends Application {
             {
                 getEducation();
             }
+            else
+            {
+                notif.setText("Some field/s is/are invalid. \nPlease fill the fields according to the following constraints:\n1. Phone number should be 10 digit. \n2. Email ID should be proper. \n3. No field should be blank.");
+            }
         });
 
-        Scene scene1 = new Scene(sc1, 400, 400);
+        Scene scene1 = new Scene(vBox, 400, 400);
         scene1.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
         stage.setScene(scene1);
         stage.setTitle("Personal Info");
@@ -114,6 +123,7 @@ public class Main extends Application {
 
     void getEducation()
     {
+        notif.setText("");
         int rowCounter = 0;
         Button nextBtn = new Button("Next");
 
@@ -124,8 +134,10 @@ public class Main extends Application {
         gp2.addRow(rowCounter++, person.universityNameL, person.universityNameTF);
         gp2.addRow(rowCounter++, person.UndergradCGPA_L, person.UndergradCGPA_TF);
         gp2.addRow(rowCounter++, nextBtn);
-
+        //gp2.addRow(rowCounter++, notif);
         sc2.setContent(gp2);
+        VBox vBox = new VBox();
+        vBox.getChildren().addAll(sc2, notif);
 
         nextBtn.setOnAction(event ->
         {
@@ -133,10 +145,14 @@ public class Main extends Application {
             {
                 getSkills();
             }
+            else
+            {
+                notif.setText("Some field/s is/are invalid. \nPlease fill the fields according to the following constraints:\n1. SSC & HSC percent should be between 1 and 100. \n2. CGPA should be between 1 and 10. \n3. No field should be blank.");
+            }
         });
 
 
-        Scene scene = new Scene(sc2, 400, 400);
+        Scene scene = new Scene(vBox, 400, 400);
         scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
         stage.setScene(scene);
         stage.setTitle("Educational Details");
@@ -145,10 +161,12 @@ public class Main extends Application {
 
     void getSkills()
     {
+        notif.setText("");
         final Counter count = new Counter();
         Button nextBtn = new Button("Next");
         Button addBtn = new Button("Add skill");
 
+        gp3.addRow(count.n++, notif);
         gp3.addRow(count.n++, addBtn, nextBtn);
 
         sc3.setContent(gp3);
@@ -166,6 +184,10 @@ public class Main extends Application {
             {
                 getCoverLetter();
             }
+            else
+            {
+                notif.setText("Skills should not be blank.");
+            }
         });
 
         Scene scene = new Scene(sc3, 400, 400);
@@ -177,12 +199,14 @@ public class Main extends Application {
 
     void getCoverLetter()
     {
+        notif.setText("");
         Button submitBtn = new Button("Submit");
         person.coverletterTF.setPrefSize(350,50);
         person.coverletterTF.setMaxSize(350, 50);
         gp4.addRow(0, person.coverletterL);
         gp4.addRow(1, person.coverletterTF);
         gp4.addRow(2, submitBtn);
+        gp4.addRow(3, notif);
 
         submitBtn.setOnAction(event ->
         {
@@ -200,6 +224,7 @@ public class Main extends Application {
                 {
                     e.printStackTrace();
                 }
+
                 BorderPane borderPane = new BorderPane();
                 Label success = new Label("Your resume has been generated in the file resume.html");
                 borderPane.setCenter(success);
@@ -207,6 +232,10 @@ public class Main extends Application {
                 stage.setScene(scene);
                 stage.setTitle("Resume Generated");
                 stage.show();
+            }
+            else
+            {
+                notif.setText("Cover letter should not be empty or above 200 letters.");
             }
         });
 
@@ -264,6 +293,16 @@ class Person
 
     Validation validation = new Validation();
 
+    TextField nameSearchTF = new TextField();
+    String nameSearchString;
+    Label notif = new Label("");
+
+    float calculatePercent(int marks, int total)
+    {
+        float percent = (float)marks/total * 100;
+        return percent;
+    }
+
     void databaseConnection()
     {
         try
@@ -302,66 +341,92 @@ class Person
         }
     }
 
-    void retrieveData(Stage stage)
+    void searchForResume(Stage stage)
     {
-        TextField nameSearchTF = new TextField();
         Label nameSearchL = new Label("Enter name: ");
-        String nameSearchString = nameSearchTF.getText();
         HBox hBox = new HBox(10);
         Button searchBtn = new Button("Search");
-        hBox.getChildren().addAll(nameSearchL, nameSearchTF, searchBtn);
-        Scene scene = new Scene(hBox, 400, 400);
+        VBox vBox = new VBox();
+        hBox.getChildren().addAll(nameSearchL, nameSearchTF);
+        vBox.getChildren().addAll(hBox, searchBtn, notif);
+        Scene scene = new Scene(vBox, 400, 400);
         scene.getStylesheets().add(getClass().getResource("/style.css").toExternalForm());
         stage.setScene(scene);
         stage.setTitle("Enter name");
         stage.show();
+        nameSearchString = nameSearchTF.getText();
 
         searchBtn.setOnAction(new EventHandler<ActionEvent>()
         {
             @Override
             public void handle(ActionEvent event)
             {
-                try
-                {
-                    Class.forName("com.mysql.jdbc.Driver");
-                    Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/stqa","root","root");
-
-                    Statement stmt = connection.createStatement();
-                    ResultSet rs=stmt.executeQuery("select * from Person where name='" + nameSearchString + "';");
-                    while(rs.next())
-                    {
-                        nameTF.setText(rs.getString(1));
-                        professionTF.setText(rs.getString(2));
-                        addressTF.setText(rs.getString(3));
-                        phoneTF.setText(Long.toString(rs.getLong(4)));
-                        emailTF.setText(rs.getString(5));
-                        schoolTF.setText(rs.getString(6));
-                        SSC_TF.setText(Float.toString(rs.getFloat(7)));
-                        juniorCollegeTF.setText(rs.getString(8));
-                        HSC_TF.setText(Float.toString(rs.getFloat(9)));
-                        universityNameTF.setText(rs.getString(10));
-                        UndergradCGPA_TF.setText(Float.toString(rs.getFloat(11)));
-                        String skillsString = rs.getString(12);
-                        coverletterTF.setText(rs.getString(13));
-
-                        String[] skillsArray = skillsString.split(",");
-                        for(int i = 0; i < skillsArray.length; i++)
-                        {
-                            skillsArr.add(new TextField(skillsArray[i]));
-                        }
-                    }
-
-                    process();
-
-                }
-                catch(Exception e)
-                {
-                    System.out.println(e);
-                }
+                retrieveData(nameSearchString);
             }
         });
-
     }
+
+    String retrieveData(String name)
+    {
+        try
+        {
+            notif.setText("");
+            Class.forName("com.mysql.jdbc.Driver");
+            Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/stqa","root","root");
+
+            Statement stmt = connection.createStatement();
+            ResultSet rs=stmt.executeQuery("select * from Person where name=\"" + name + "\";");
+            if(!rs.next())
+            {
+                notif.setText("Such record does not exist. Reenter record name");
+                return null;
+            }
+            else
+            {
+                //ResultSet rs=stmt.executeQuery("select * from Person");
+                System.out.println("NameSearchString: " + name);
+                //System.out.println(rs.getString(1));
+                System.out.println("Debug");
+                do
+                {
+                    nameTF.setText(rs.getString(1));
+                    System.out.println(rs.getString(1));
+                    professionTF.setText(rs.getString(2));
+                    addressTF.setText(rs.getString(3));
+                    phoneTF.setText(Long.toString(rs.getLong(4)));
+                    emailTF.setText(rs.getString(5));
+                    schoolTF.setText(rs.getString(6));
+                    SSC_TF.setText(Float.toString(rs.getFloat(7)));
+                    juniorCollegeTF.setText(rs.getString(8));
+                    HSC_TF.setText(Float.toString(rs.getFloat(9)));
+                    universityNameTF.setText(rs.getString(10));
+                    UndergradCGPA_TF.setText(Float.toString(rs.getFloat(11)));
+                    String skillsString = rs.getString(12);
+                    coverletterTF.setText(rs.getString(13));
+
+                    String[] skillsArray = skillsString.split(",");
+                    for(int i = 0; i < skillsArray.length; i++)
+                    {
+                        skillsArr.add(new TextField(skillsArray[i]));
+                    }
+                }while (rs.next());
+
+                System.out.println("NameTF: " + nameTF.getText());
+                System.out.println("ProfessionTF: " + professionTF.getText());
+
+                process();
+                notif.setText(name + ", your resume is now available in resume.html!");
+                return emailTF.getText();
+            }
+
+        }
+        catch(Exception e)
+        {
+            System.out.println(e);
+            return null;
+        }
+    }
+
 
 
      boolean setUpValidation(final TextField tf)
